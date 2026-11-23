@@ -17,6 +17,10 @@ app.use(bodyParser.json())
 
 app.get('/', (req, res) => res.send('Hello World!'))
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'user-api' })
+})
+
 app.use('/user', userRouter)
 
 const server = app.listen(port, (err) => {
