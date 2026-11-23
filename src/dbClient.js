@@ -1,30 +1,38 @@
 var redis = require("redis");
-const configure = require('./configure')
+const configure = require('./configure');
 
-const config = configure()
+const config = configure();
+const redisUrl = process.env.REDIS_URL;
 
-const redisUrl = process.env.REDIS_URL
-
-var db = redis.createClient(
-  redisUrl
-    ? {
-        url: redisUrl,
-        tls: redisUrl.startsWith('rediss://'),
-        retry_strategy: () => {
-          return new Error("Retry time exhausted")
-        }
+const options = redisUrl
+  ? {
+      url: redisUrl,
+      tls: {},
+      retry_strategy: (options) => {
+        console.error("Redis connection retry:", options.error?.message);
+        return Math.min(options.attempt * 1000, 10000);
       }
-    : {
-        host: config.redis.host,
-        port: config.redis.port,
-        retry_strategy: () => {
-          return new Error("Retry time exhausted")
-        }
+    }
+  : {
+      host: config.redis.host,
+      port: config.redis.port,
+      retry_strategy: () => {
+        return new Error("Retry time exhausted");
       }
-)
+    };
+
+var db = redis.createClient(options);
+
+db.on("connect", () => {
+  console.log("Redis connection established");
+});
+
+db.on("ready", () => {
+  console.log("Redis client ready");
+});
 
 process.on('SIGINT', function() {
   db.quit();
 });
 
-module.exports = db
+module.exports = db;
