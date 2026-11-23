@@ -36,18 +36,3 @@ jobs:
 
       - name: Run tests
         run: npm test
-
-  deploy:
-    name: Deploy to Render
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Trigger Render deployment
-        env:
-          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: |
-          curl --fail --show-error --silent \
-            --request POST \
-            "$DEPLOY_HOOK"
